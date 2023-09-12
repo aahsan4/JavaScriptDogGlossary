@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Glossary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            background-color: antiquewhite;
+            color: black;
+            padding: 20px;
+            margin: 0;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #content {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        ol {
+            list-style-type: decimal;
+            padding-left: 20px;
+        }
+
+        ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        li {
+            margin: 5px 0;
+        }
+
+        p.error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<h1>Dog Glossary</h1>
+    <button id="button-random-dog">Show Random Dog</button>
+    <label for="input-breed">Enter a breed:</label>
+    <input type="text" id="input-breed" placeholder="Enter a breed">
+    <button id="button-show-breed">Show Breed</button>
+    <button id="button-show-sub-breed">Show Sub-Breed</button>
+    <button id="button-show-all">Show All Breeds</button>
+<div id="content"></div>
+
+<script>
+    const buttonRandomDog = document.getElementById('button-random-dog');
+    const inputBreed = document.getElementById('input-breed');
+    const buttonShowBreed = document.getElementById('button-show-breed');
+    const buttonShowSubBreed = document.getElementById('button-show-sub-breed');
+    const buttonShowAll = document.getElementById('button-show-all');
+    const contentDiv = document.getElementById('content');
+
+    //function to fetch and display sub-breeds of a specific breed
+    async function fetchSubBreeds() {
+        const breedName = inputBreed.value.trim().toLowerCase(); // Convert input to lowercase and trim whitespace
+        if (breedName === '') {
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://dog.ceo/api/breed/${breedName}/list`);
+            const data = await response.json();
+
+            if (data.status === 'error') {
+                //Breed not found, display an error message
+                contentDiv.innerHTML = ''; // Clear any previous content
+                const errorMessage = document.createElement('p');
+                errorMessage.textContent = 'Breed not found!';
+                contentDiv.appendChild(errorMessage);
+            } else if (data.message.length > 0) {
+                //creating an ordered list element
+                const subBreedList = document.createElement('ol');
+
+                //populating the ordered list with sub-breeds
+                data.message.forEach(subBreed => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = subBreed;
+                    subBreedList.appendChild(listItem);
+                });
+
+                //clearing the content div and append the sub-breed list
+                contentDiv.innerHTML = '';
+                contentDiv.appendChild(subBreedList);
+            } else {
+                //no sub-breeds found, display a message
+                contentDiv.innerHTML = '<p>No sub-breeds found!</p>';
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    //adding a click event listener to the "Show Sub-Breed" button
+    buttonShowSubBreed.addEventListener('click', fetchSubBreeds);
+    //function to fetch and display a specific breed's image
+    async function fetchBreedImage() {
+        const breedName = inputBreed.value.trim().toLowerCase(); // Convert input to lowercase and trim whitespace
+        if (breedName === '') {
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://dog.ceo/api/breed/${breedName}/images/random`);
+            const data = await response.json();
+
+            if (data.status === 'error') {
+                //Breed not found, display an error message
+                contentDiv.innerHTML = ''; // Clear any previous content
+                const errorMessage = document.createElement('p');
+                errorMessage.textContent = 'Breed not found!';
+                contentDiv.appendChild(errorMessage);
+            } else if (data && data.message) {
+                //creating an image element and set its source to the breed image URL
+                const breedImage = document.createElement('img');
+                breedImage.src = data.message;
+
+                //clearing the content div and append the new image
+                contentDiv.innerHTML = '';
+                contentDiv.appendChild(breedImage);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    //adding a click event listener to the "Show Breed" button
+    buttonShowBreed.addEventListener('click', fetchBreedImage);
+
+    //function to fetch and display a random dog image
+    async function fetchRandomDog() {
+        try {
+            const response = await fetch('https://dog.ceo/api/breeds/image/random');
+            const data = await response.json();
+            if (data && data.message) {
+                // Create an image element and set its source to the random dog image URL
+                const dogImage = document.createElement('img');
+                dogImage.src = data.message;
+
+                // Clear the content div and append the new image
+                contentDiv.innerHTML = '';
+                contentDiv.appendChild(dogImage);
+            } else {
+                throw new Error('Failed to fetch a random dog image.');
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    //adding a click event listener to the "Show Random Dog" button
+    buttonRandomDog.addEventListener('click', fetchRandomDog);
+
+    //initially fetching when the page loads
+    fetchRandomDog();
+    //function to fetch and display all breeds with sub-breeds
+    async function fetchAllBreeds() {
+        try {
+            const response = await fetch('https://dog.ceo/api/breeds/list/all');
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                //creating an ordered list element
+                const breedList = document.createElement('ol');
+
+                //iterating through the breeds
+                for (const breed in data.message) {
+                    const breedItem = document.createElement('li');
+                    breedItem.textContent = breed;
+                    //checking if there are sub-breeds
+                    if (data.message[breed].length > 0) {
+                        const subBreedList = document.createElement('ul');
+                        //iterating through sub-breeds and adding them as list items
+                        data.message[breed].forEach(subBreed => {
+                            const subBreedItem = document.createElement('li');
+                            subBreedItem.textContent = subBreed;
+                            subBreedList.appendChild(subBreedItem);
+                        });
+                        //appending the sub-breed list to the breed item
+                        breedItem.appendChild(subBreedList);
+                    }
+                    //appending the breed item to the main list
+                    breedList.appendChild(breedItem);
+                }
+                //clearing the content div and appending the breed list
+                contentDiv.innerHTML = '';
+                contentDiv.appendChild(breedList);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    //adding a click event listener to the "Show All Breeds" button
+    buttonShowAll.addEventListener('click', fetchAllBreeds);
+</script>
+</body>
+</html>
